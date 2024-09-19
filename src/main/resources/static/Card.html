@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Card Management</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <style>
+        .card-container { margin: 20px 0; }
+        .card { border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="mt-5">Card Management</h1>
+        <button class="btn btn-primary mb-3" id="createCardBtn">Create New Card</button>
+        <div id="cardsContainer" class="card-container"></div>
+    </div>
+
+    <!-- Card Modal -->
+    <div class="modal" id="cardModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Card</h5>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <form id="cardForm">
+                        <input type="hidden" id="cardId">
+                        <div class="form-group">
+                            <label for="cardName">Card Name</label>
+                            <input type="text" class="form-control" id="cardName" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="dueDate">Due Date</label>
+                            <input type="date" class="form-control" id="dueDate">
+                        </div>
+                        <div class="form-group">
+                            <label for="attachment">Attachment</label>
+                            <input type="file" class="form-control" id="attachment">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="saveCardBtn">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        $(document).ready(function() {
+            fetchCards();
+
+            function fetchCards() {
+                $.ajax({
+                    url: '/api/cards',
+                    type: 'GET',
+                    success: function(cards) {
+                        $('#cardsContainer').empty();
+                        cards.forEach(card => {
+                            const cardDiv = $(`
+                                <div class="card" data-id="${card.id}">
+                                    <h5>${card.name}</h5>
+                                    <p>Due Date: ${card.dueDate || 'None'}</p>
+                                    <p>Attachment: ${card.attachment || 'None'}</p>
+                                    <button class="btn btn-warning btn-sm editCardBtn">Edit</button>
+                                    <button class="btn btn-danger btn-sm deleteCardBtn">Delete</button>
+                                </div>
+                            `);
+                            $('#cardsContainer').append(cardDiv);
+                        });
+                    },
+                    error: function() {
+                        alert('Failed to fetch cards.');
+                    }
+                });
+            }
+
+            $('#createCardBtn').click(function() {
+                $('#cardId').val('');
+                $('#cardName').val('');
+                $('#dueDate').val('');
+                $('#attachment').val('');
+                $('#cardModal').modal('show');
+            });
+
+            $('#saveCardBtn').click(function() {
+                const cardId = $('#cardId').val();
+                const cardName = $('#cardName').val();
+                const dueDate = $('#dueDate').val();
+                const formData = new FormData();
+                formData.append('name', cardName);
+                formData.append('dueDate', dueDate);
+                const url = cardId ? `/api/cards/${cardId}` : '/api/cards';
+                const type = cardId ? 'PUT' : 'POST';
+
+                $.ajax({
+                    url: '/api/cards/{id}',
+                    type: type,
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function() {
+                        $('#cardModal').modal('hide');
+                        fetchCards();
+                    },
+                    error: function() {
+                        alert('Failed to save card.');
+                    }
+                });
+            });
+
+            $(document).on('click', '.editCardBtn', function() {
+                const cardId = $(this).closest('.card').data('id');
+                $.ajax({
+                    url: `/api/cards/${cardId}`,
+                    type: 'GET',
+                    success: function(card) {
+                        $('#cardId').val(card.id);
+                        $('#cardName').val(card.name);
+                        $('#dueDate').val(card.dueDate);
+                        $('#attachment').val(''); // Handle file attachment differently
+                        $('#cardModal').modal('show');
+                    },
+                    error: function() {
+                        alert('Failed to fetch card.');
+                    }
+                });
+            });
+
+            $(document).on('click', '.deleteCardBtn', function() {
+                const cardId = $(this).closest('.card').data('id');
+                $.ajax({
+                    url: `/api/cards/${cardId}`,
+                    type: 'DELETE',
+                    success: function() {
+                        fetchCards();
+                    },
+                    error: function() {
+                        alert('Failed to delete card.');
+                    }
+                });
+            });
+        });
+    </script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

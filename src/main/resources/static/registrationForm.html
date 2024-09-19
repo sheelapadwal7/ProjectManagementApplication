@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Registration and Lookup</title>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="text-center">User Registration and Lookup</h1>
+        
+        <!-- Registration Form -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h3>Register User</h3>
+            </div>
+            <div class="card-body">
+                <form id="registrationForm">
+                    <div class="form-group">
+                        <label for="username">Username</label>
+                        <input type="text" class="form-control" id="username" placeholder="Enter username" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <input type="password" class="form-control" id="password" placeholder="Enter password" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Email address</label>
+                        <input type="email" class="form-control" id="email" placeholder="Enter email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="mobile">Mobile No</label>
+                        <input type="text" class="form-control" id="mobileNo" placeholder="Enter mobile number" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Register</button>
+                </form>
+                <div id="registerResponse" class="mt-3"></div>
+            </div>
+        </div>
+
+        <!-- Lookup Form -->
+        <div class="card">
+            <div class="card-header">
+                <h3>Lookup User</h3>
+            </div>
+            <div class="card-body">
+                <form id="lookupForm">
+                    <div class="form-group">
+                        <label for="lookupUsername">Username</label>
+                        <input type="text" class="form-control" id="lookupUsername" placeholder="Enter username" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Lookup</button>
+                </form>
+                <div id="lookupResponse" class="mt-3"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        $(document).ready(function() {
+            // Handle user registration
+            $('#registrationForm').on('submit', function(event) {
+                event.preventDefault();
+
+                var username = $('#username').val();
+                var password = $('#password').val();
+                var email = $('#email').val();
+                var mobileNo = $('#mobileNo').val();
+
+                $.ajax({
+                    url: 'http://localhost:8080/api/register',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        username: username,
+                        password: password,
+                        email: email,
+                        mobileNo: mobileNo
+                    }),
+                    success: function(data) {
+                        $('#registerResponse').html('<div class="alert alert-success">User registered successfully: ' + data.username + '</div>');
+                    },
+                    error: function(jqXHR) {
+                        $('#registerResponse').html('<div class="alert alert-danger">Error registering user: ' + jqXHR.responseText + '</div>');
+                    }
+                });
+            });
+
+            // Handle user lookup
+            $('#lookupForm').on('submit', function(event) {
+                event.preventDefault();
+
+                var username = $('#lookupUsername').val();
+
+                $.ajax({
+                    url: 'http://localhost:8080/api/' + username,
+                    type: 'GET',
+                    success: function(data) {
+                        $('#lookupResponse').html(`
+                            <div class="alert alert-info">
+                                <strong>Username:</strong> ${data.username}<br>
+                                <strong>Email:</strong> ${data.email}<br>
+                                <strong>Mobile:</strong> ${data.mobileNo}
+                            </div>
+                        `);
+                    },
+                    error: function(jqXHR) {
+                        $('#lookupResponse').html('<div class="alert alert-danger">Error fetching user: ' + jqXHR.responseText + '</div>');
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
